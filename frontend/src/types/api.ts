@@ -1,15 +1,26 @@
-export type SearchResultItem = {
+export type EntityRow = {
   id: string;
   name: string;
   type: string;
   country: string;
   programs: string[];
-  score: number;
+  score?: number;
 };
 
-export type SearchResponse = {
+export type PaginatedMeta = {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
+export type SearchResponse = PaginatedMeta & {
   query: string;
-  results: SearchResultItem[];
+  results: EntityRow[];
+};
+
+export type EntityListResponse = PaginatedMeta & {
+  items: EntityRow[];
 };
 
 export type GraphNode = {

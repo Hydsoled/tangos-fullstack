@@ -1,47 +1,83 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
-import { searchEntities } from "../api/sanctions";
+import { listEntities, searchEntities } from "../api/sanctions";
+import Pagination from "../components/Pagination";
 import SearchResultsTable from "../components/SearchResultsTable";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import type { SearchResultItem } from "../types/api";
+import type { EntityRow } from "../types/api";
 
 const DEBOUNCE_MS = 300;
 
+function parsePage(value: string | null): number {
+  const parsed = Number(value ?? "1");
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1;
+}
+
 export default function SearchPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const urlSearch = searchParams.get("search") ?? "";
+  const page = parsePage(searchParams.get("page"));
+
+  const [query, setQuery] = useState(urlSearch);
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS);
-  const [results, setResults] = useState<SearchResultItem[]>([]);
+
+  const [results, setResults] = useState<EntityRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const trimmedQuery = debouncedQuery.trim();
-
-    if (!trimmedQuery) {
-      setResults([]);
-      setError(null);
-      setIsLoading(false);
+    const trimmed = debouncedQuery.trim();
+    if (trimmed === urlSearch) {
       return;
     }
 
+    const nextParams = new URLSearchParams(searchParams);
+    if (trimmed) {
+      nextParams.set("search", trimmed);
+    } else {
+      nextParams.delete("search");
+    }
+    nextParams.set("page", "1");
+    setSearchParams(nextParams, { replace: true });
+  }, [debouncedQuery, urlSearch, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    setQuery(urlSearch);
+  }, [urlSearch]);
+
+  useEffect(() => {
     let isCancelled = false;
 
     setIsLoading(true);
     setError(null);
 
-    searchEntities(trimmedQuery)
+    const request = urlSearch.trim()
+      ? searchEntities(urlSearch.trim(), page)
+      : listEntities(page);
+
+    request
       .then((response) => {
-        if (!isCancelled) {
-          setResults(response.results);
+        if (isCancelled) {
+          return;
         }
+
+        const rows = "results" in response ? response.results : response.items;
+        setResults(rows);
+        setTotal(response.total);
+        setTotalPages(response.total_pages);
       })
       .catch((err: unknown) => {
         if (!isCancelled) {
           setResults([]);
+          setTotal(0);
+          setTotalPages(1);
           setError(
-            err instanceof ApiError ? err.message : "Search request failed",
+            err instanceof ApiError ? err.message : "Failed to load entities",
           );
         }
       })
@@ -54,11 +90,22 @@ export default function SearchPage() {
     return () => {
       isCancelled = true;
     };
-  }, [debouncedQuery]);
+  }, [urlSearch, page]);
 
   const handleSelect = (entityId: string) => {
-    navigate(`/entities/${entityId}`);
+    const returnSearch = searchParams.toString();
+    navigate(`/entities/${entityId}`, {
+      state: returnSearch ? { returnSearch } : undefined,
+    });
   };
+
+  const handlePageChange = (nextPage: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("page", String(nextPage));
+    setSearchParams(nextParams);
+  };
+
+  const isSearchMode = urlSearch.trim().length > 0;
 
   return (
     <section className="page-section">
@@ -76,7 +123,11 @@ export default function SearchPage() {
         autoComplete="off"
       />
 
-      {isLoading && <p className="status-message">Searching…</p>}
+      {isLoading && (
+        <p className="status-message">
+          {isSearchMode ? "Searching…" : "Loading entities…"}
+        </p>
+      )}
 
       {error && (
         <p className="status-message status-message--error" role="alert">
@@ -84,12 +135,24 @@ export default function SearchPage() {
         </p>
       )}
 
-      {!isLoading && !error && debouncedQuery.trim() && results.length === 0 && (
+      {!isLoading && !error && isSearchMode && results.length === 0 && (
         <p className="status-message">No matching entities found.</p>
       )}
 
-      {results.length > 0 && (
-        <SearchResultsTable results={results} onSelect={handleSelect} />
+      {!isLoading && !error && results.length > 0 && (
+        <>
+          <SearchResultsTable
+            results={results}
+            showScore={isSearchMode}
+            onSelect={handleSelect}
+          />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            onPageChange={handlePageChange}
+          />
+        </>
       )}
     </section>
   );

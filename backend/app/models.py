@@ -30,7 +30,27 @@ class SearchResultItem(BaseModel):
 
 class SearchResponse(BaseModel):
     query: str
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
     results: list[SearchResultItem]
+
+
+class EntityListItem(BaseModel):
+    id: str
+    name: str
+    type: str
+    country: str
+    programs: list[str]
+
+
+class EntityListResponse(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+    items: list[EntityListItem]
 
 
 class GraphNode(BaseModel):

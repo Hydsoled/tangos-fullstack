@@ -1,10 +1,11 @@
+import math
 import re
 from difflib import SequenceMatcher
 
 from app.models import Entity, SearchResultItem
 
 MIN_SCORE = 0.4
-MAX_RESULTS = 20
+DEFAULT_PAGE_SIZE = 10
 
 
 def normalize(text: str) -> str:
@@ -60,10 +61,21 @@ def score_entity(query: str, entity: Entity) -> float:
     return max(score_name(query, name) for name in names)
 
 
-def search_entities(query: str, entities: list[Entity]) -> list[SearchResultItem]:
+def _clamp_page(page: int, total_pages: int) -> int:
+    if total_pages == 0:
+        return 1
+    return min(max(1, page), total_pages)
+
+
+def search_entities(
+    query: str,
+    entities: list[Entity],
+    page: int = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+) -> tuple[list[SearchResultItem], int, int, int]:
     trimmed = query.strip()
     if not trimmed:
-        return []
+        return [], page, page_size, 0
 
     scored: list[tuple[float, Entity]] = []
     for entity in entities:
@@ -73,7 +85,13 @@ def search_entities(query: str, entities: list[Entity]) -> list[SearchResultItem
 
     scored.sort(key=lambda item: (-item[0], item[1].name))
 
-    return [
+    total = len(scored)
+    total_pages = max(1, math.ceil(total / page_size)) if total else 1
+    current_page = _clamp_page(page, total_pages)
+    start = (current_page - 1) * page_size
+    page_items = scored[start : start + page_size]
+
+    results = [
         SearchResultItem(
             id=entity.id,
             name=entity.name,
@@ -82,5 +100,7 @@ def search_entities(query: str, entities: list[Entity]) -> list[SearchResultItem
             programs=entity.programs,
             score=round(score, 3),
         )
-        for score, entity in scored[:MAX_RESULTS]
+        for score, entity in page_items
     ]
+
+    return results, current_page, page_size, total

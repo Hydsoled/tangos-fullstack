@@ -1,7 +1,8 @@
-import type { SearchResultItem } from "../types/api";
+import type { EntityRow } from "../types/api";
 
 type SearchResultsTableProps = {
-  results: SearchResultItem[];
+  results: EntityRow[];
+  showScore: boolean;
   onSelect: (entityId: string) => void;
 };
 
@@ -15,6 +16,7 @@ function typeBadgeClass(type: string): string {
 
 export default function SearchResultsTable({
   results,
+  showScore,
   onSelect,
 }: SearchResultsTableProps) {
   return (
@@ -26,7 +28,7 @@ export default function SearchResultsTable({
             <th>Type</th>
             <th>Country</th>
             <th>Programs</th>
-            <th className="score-cell">Score</th>
+            {showScore && <th className="score-cell">Score</th>}
           </tr>
         </thead>
         <tbody>
@@ -38,7 +40,11 @@ export default function SearchResultsTable({
               </td>
               <td>{result.country || "—"}</td>
               <td>{result.programs.join(", ") || "—"}</td>
-              <td className="score-cell">{result.score.toFixed(3)}</td>
+              {showScore && (
+                <td className="score-cell">
+                  {typeof result.score === "number" ? result.score.toFixed(3) : "—"}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

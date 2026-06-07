@@ -4,7 +4,8 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.graph import build_entity_graph
-from app.models import GraphResponse, SearchResponse
+from app.listing import list_entities
+from app.models import EntityListResponse, GraphResponse, SearchResponse
 from app.search import search_entities
 from app.store import store
 
@@ -30,10 +31,32 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/entities")
+def entities(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+) -> EntityListResponse:
+    return list_entities(store.entities, page=page, page_size=page_size)
+
+
 @app.get("/api/search")
-def search(q: str = Query(..., min_length=1)) -> SearchResponse:
-    results = search_entities(q, store.entities)
-    return SearchResponse(query=q, results=results)
+def search(
+    q: str = Query(..., min_length=1),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+) -> SearchResponse:
+    results, current_page, size, total = search_entities(
+        q, store.entities, page=page, page_size=page_size
+    )
+    total_pages = max(1, (total + size - 1) // size) if total else 1
+    return SearchResponse(
+        query=q,
+        page=current_page,
+        page_size=size,
+        total=total,
+        total_pages=total_pages,
+        results=results,
+    )
 
 
 @app.get("/api/entities/{entity_id}/graph")

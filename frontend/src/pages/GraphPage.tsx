@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { getEntityGraph } from "../api/sanctions";
 import RelationGraph from "../components/RelationGraph";
 import type { GraphResponse } from "../types/api";
 
+type GraphLocationState = {
+  returnSearch?: string;
+};
+
 export default function GraphPage() {
   const { entityId } = useParams<{ entityId: string }>();
+  const location = useLocation();
+  const returnSearch = (location.state as GraphLocationState | null)?.returnSearch;
+  const backTo = returnSearch ? `/?${returnSearch}` : "/";
   const [graph, setGraph] = useState<GraphResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +71,7 @@ export default function GraphPage() {
   return (
     <section className="page-section">
       <p>
-        <Link to="/">← Back to search</Link>
+        <Link to={backTo}>← Back to search</Link>
       </p>
 
       {isLoading && <p className="status-message">Loading graph…</p>}
