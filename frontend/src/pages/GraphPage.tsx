@@ -52,7 +52,7 @@ export default function GraphPage() {
 
   if (!entityId) {
     return (
-      <section>
+      <section className="page-section">
         <p>Missing entity ID.</p>
         <Link to="/">Back to search</Link>
       </section>
@@ -62,30 +62,45 @@ export default function GraphPage() {
   const centerNode = graph?.nodes.find((node) => node.is_center);
 
   return (
-    <section>
+    <section className="page-section">
       <p>
         <Link to="/">← Back to search</Link>
       </p>
 
-      {isLoading && <p>Loading graph…</p>}
+      {isLoading && <p className="status-message">Loading graph…</p>}
 
       {error && (
-        <p style={{ color: "#b00020" }} role="alert">
+        <p className="status-message status-message--error" role="alert">
           {error}
         </p>
       )}
 
       {graph && centerNode && (
         <>
-          <h2 style={{ marginBottom: "0.25rem" }}>{centerNode.name}</h2>
-          <p style={{ marginTop: 0, color: "#555" }}>
-            {centerNode.type} · {centerNode.id}
+          <h2>{centerNode.name}</h2>
+          <p className="entity-meta">
+            <span
+              className={
+                centerNode.type === "person" ||
+                centerNode.type === "organization" ||
+                centerNode.type === "vessel"
+                  ? `type-badge type-badge--${centerNode.type}`
+                  : "type-badge"
+              }
+            >
+              {centerNode.type}
+            </span>{" "}
+            · {centerNode.id}
           </p>
 
           {graph.edges.length === 0 ? (
-            <p>No direct relationships recorded for this entity.</p>
+            <p className="status-message">
+              No direct relationships recorded for this entity.
+            </p>
           ) : (
-            <RelationGraph graph={graph} />
+            <div className="graph-panel">
+              <RelationGraph graph={graph} />
+            </div>
           )}
         </>
       )}

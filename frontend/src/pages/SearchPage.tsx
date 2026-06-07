@@ -61,36 +61,31 @@ export default function SearchPage() {
   };
 
   return (
-    <section>
+    <section className="page-section">
       <h2>Search</h2>
-      <label htmlFor="entity-search" style={{ display: "block", marginBottom: "0.5rem" }}>
+      <label htmlFor="entity-search" className="search-label">
         Entity name
       </label>
       <input
         id="entity-search"
         type="search"
+        className="search-input"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search organizations, persons, or vessels…"
         autoComplete="off"
-        style={{
-          width: "100%",
-          maxWidth: "32rem",
-          padding: "0.5rem 0.75rem",
-          fontSize: "1rem",
-        }}
       />
 
-      {isLoading && <p style={{ marginTop: "1rem" }}>Searching…</p>}
+      {isLoading && <p className="status-message">Searching…</p>}
 
       {error && (
-        <p style={{ marginTop: "1rem", color: "#b00020" }} role="alert">
+        <p className="status-message status-message--error" role="alert">
           {error}
         </p>
       )}
 
       {!isLoading && !error && debouncedQuery.trim() && results.length === 0 && (
-        <p style={{ marginTop: "1rem" }}>No matching entities found.</p>
+        <p className="status-message">No matching entities found.</p>
       )}
 
       {results.length > 0 && (

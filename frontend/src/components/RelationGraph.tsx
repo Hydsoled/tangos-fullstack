@@ -12,12 +12,10 @@ type RelationGraphProps = {
 };
 
 const NODE_COLORS: Record<string, string> = {
-  person: "#2563eb",
-  organization: "#7c3aed",
-  vessel: "#0d9488",
+  person: "var(--color-person)",
+  organization: "var(--color-organization)",
+  vessel: "var(--color-vessel)",
 };
-
-const CENTER_NODE_COLOR = "#b45309";
 
 export default function RelationGraph({ graph }: RelationGraphProps) {
   const { width, height } = getGraphDimensions();
@@ -27,14 +25,8 @@ export default function RelationGraph({ graph }: RelationGraphProps) {
 
   return (
     <svg
+      className="relation-graph"
       viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      style={{
-        maxWidth: `${width}px`,
-        border: "1px solid #ddd",
-        borderRadius: "4px",
-        background: "#fafafa",
-      }}
       aria-label={
         centerNode
           ? `Relationship graph for ${centerNode.name}`
@@ -60,7 +52,7 @@ export default function RelationGraph({ graph }: RelationGraphProps) {
               y1={source.y}
               x2={target.x}
               y2={target.y}
-              stroke="#999"
+              stroke="#94a3b8"
               strokeWidth={1.5}
             />
             <rect
@@ -69,7 +61,7 @@ export default function RelationGraph({ graph }: RelationGraphProps) {
               width={label.length * 6.4}
               height={16}
               fill="#fafafa"
-              opacity={0.9}
+              opacity={0.95}
             />
             <text
               x={labelX}
@@ -77,7 +69,7 @@ export default function RelationGraph({ graph }: RelationGraphProps) {
               textAnchor="middle"
               dominantBaseline="middle"
               fontSize={11}
-              fill="#444"
+              fill="#475569"
             >
               {label}
             </text>
@@ -88,7 +80,7 @@ export default function RelationGraph({ graph }: RelationGraphProps) {
       {positionedNodes.map(({ node, position }) => {
         const radius = node.is_center ? 36 : 28;
         const fill = node.is_center
-          ? CENTER_NODE_COLOR
+          ? "var(--color-center)"
           : (NODE_COLORS[node.type] ?? "#64748b");
 
         return (
@@ -105,11 +97,11 @@ export default function RelationGraph({ graph }: RelationGraphProps) {
               textAnchor="middle"
               fontSize={12}
               fontWeight={node.is_center ? 600 : 400}
-              fill="#222"
+              fill="#1e293b"
             >
               {truncateLabel(node.name)}
             </text>
-            <text y={radius + 28} textAnchor="middle" fontSize={10} fill="#666">
+            <text y={radius + 28} textAnchor="middle" fontSize={10} fill="#64748b">
               {node.type}
             </text>
           </g>
