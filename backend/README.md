@@ -30,6 +30,13 @@ uvicorn app.main:app --reload --port 8000
 
 API at http://localhost:8000. OpenAPI UI at http://localhost:8000/docs.
 
+## Test
+
+```bash
+uv sync --group dev
+uv run pytest
+```
+
 ## Notes
 
 - The fixture lives at `../data/sdn_sample.json`. Treat it as read-only — load it once on startup.

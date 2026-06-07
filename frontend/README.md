@@ -28,3 +28,9 @@ pnpm build
 ```bash
 pnpm typecheck
 ```
+
+## Test
+
+```bash
+pnpm test
+```
